@@ -1,11 +1,11 @@
 # Experiments
 ## Whole resnet19 backbone
-> ### Experiment 1:
+### Experiment 1:
   Configuration:
   - 400 epochs
   - L2 regularisation with lambda=0.005
   - learning_rate=0.001
-  - > code:
+  - code:
     ```py
     class AugmentedModel(nn.Module):
         def __init__(self, num_classes: int = 5, dropout: float = 0.5) -> None:
