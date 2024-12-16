@@ -1,5 +1,5 @@
 # Experiments
-## Whole resnet19 backbone
+## Whole resnet18 backbone
 ### Experiment 1 (resnet18 + edges):
   Configuration:
   - 400 epochs
