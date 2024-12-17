@@ -2,8 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from torchvision.models import resnet18, ResNet18_Weights
-
 class CustomModel(nn.Module):
     def __init__(self, num_classes: int = 5, dropout: float = 0.5) -> None:
         super().__init__()
@@ -26,9 +24,12 @@ class CustomModel(nn.Module):
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2),
         )
-        self.images_avgpool = nn.AdaptiveAvgPool2d((6, 6))
+        self.images_avgpool = nn.Sequential(
+          nn.AdaptiveAvgPool2d((6, 6)),
+          nn.Flatten()
+        )
         self.images_classifier = nn.Sequential(
-            nn.Dropout(p=dropout),
+            # nn.Dropout(p=dropout),
             nn.Linear(BASE_SIZE*4 * 6 * 6, BASE_SIZE*8),
             nn.ReLU(inplace=True),
             nn.Dropout(p=dropout),
@@ -67,6 +68,7 @@ class CustomModel(nn.Module):
     def forward(self, image: torch.Tensor, edges: torch.Tensor) -> torch.Tensor:
         
         images = self.images_features(image)
+        print(images.shape)
         images = self.images_avgpool(images)
         print(images.shape)
         images = self.images_classifier(images)
