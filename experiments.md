@@ -2,7 +2,7 @@
 
 ## Whole resnet18 backbone
 
-### Experiment 1 (resnet18 + edges):
+### 1.0 ResSet18 + edges processed by separate group of layers:
 
 Configuration:
 
@@ -85,7 +85,7 @@ Results
   ![validation loss graph](images/resnet18-backbone/1/val_loss.png)
   ![training loss graph](images/resnet18-backbone/1/train_loss.png)
 
-## Only ResNet-18 with frozen weights + FFN
+## 1.1 Only ResNet-18 with frozen weights + FFN
 
 ### Setup:
 
@@ -152,7 +152,7 @@ for param in net.resnet18.parameters():
 - [Confusion Matrix](path/to/image)
 - [Learning Curves](path/to/image)
 
-## Only DownScaled AlexNet
+## 2.0 Only DownScaled AlexNet
 
 ### Setup:
 
@@ -218,7 +218,7 @@ Model does not learn at all - accuracy stays at 57.442% for the whole 20 epochs 
 
 I will proceed to find the solution to this problem
 
-## Overcomming excessive representation of classes in dataset
+## 3.0 Overcomming excessive representation of classes in dataset
 
 Here, I use weighted optimizer in different settings which I compare below
 
@@ -230,6 +230,8 @@ I will be testing each method (training model) for no more than 50 epochs
 | ---------- | -------------- | ---------------- | ------------------------- |
 | No weights | 4              | 0                | 0                         |
 | Weights    | 4              | 0                | 0                         |
+| No weights | 20             | 0.5              | 0                         |
+| Weights    | 18             | 0.5              | 0                         |
 
 #### Configuration
 
@@ -293,3 +295,22 @@ weights_tensor = torch.Tensor(list(class_weights.values())).to(device)
 criterion = nn.CrossEntropyLoss(weights_tensor)
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 ```
+
+### Results
+
+Seems like the existence of weights in criterion was not at fault.
+
+**I assume that previous architecture from point 2.0 was problematic** as we I was joining 2 models with separate layer after concating tensors.
+
+I will look at this in the next experiment
+
+Also, keeping dropout=0.5 may not be the best idea for such model
+
+## Testing Double Input Architecture of the Model 
+
+<!-- | Method     | Learning epoch | dropout variable | regularization param (L2) |
+| ---------- | -------------- | ---------------- | ------------------------- |
+| No weights | 4              | 0                | 0                         |
+| Weights    | 4              | 0                | 0                         |
+| No weights | 20             | 0.5              | 0                         |
+| Weights    | 18             | 0.5              | 0                         | -->
