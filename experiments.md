@@ -566,3 +566,11 @@ class EarlyIntermediarySpaceModel(nn.Module):
         
         return res
 ```
+
+# General Observation
+All the tested models were overfitting - while the training accuracy were reaching 80-95%, the validation accuracy had been reaching top 67%.
+I assume, the reason may be the inequality of data between validation and training dataset
+
+Turns out the data was dividen in not so wise way.
+
+I will try to redo these experiments using better data division
