@@ -312,14 +312,14 @@ Also, keeping dropout=0.5 may not be the best idea for such model
 - Validation Accuracy at the epoch from "Reached 90% Training" column
 - Models were tested up to 50th epoch
 
-| Method             | Reached 90% Training | Validation Accuracy | dropout variable | regularization param (L2) | Comments                                          |
-| ------------------ | -------------------- | ------------------- | ---------------- | ------------------------- | ------------------------------------------------- |
-| Joined Classes     | 19                   | 68.644%             | 0                | 0                         |                                                   |
-| Joined Classes     |                      |                     | 0.5              | 0.001                     | At 50th epoch, train_acc=82.226%, val_acc=61.501% |
-| Intermediary Space | 26                   | 67.676%             | 0                | 0                         |                                                   |
-| Intermediary Space |                      |                     | 0.5              | 0.001                     | At 50th epoch, train_acc=80.910%, val_acc=66.586% |
-
-
+| Method                   | Reached 90% Training | Validation Accuracy | dropout variable | regularization param (L2) | Comments                                                                                                     |
+| ------------------------ | -------------------- | ------------------- | ---------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Joined Classes           | 19                   | 68.644%             | 0                | 0                         |                                                                                                              |
+| Joined Classes           |                      |                     | 0.5              | 0.001                     | At 50th epoch, train_acc=82.226%, val_acc=61.501%                                                            |
+| Intermediary Space       | 26                   | 67.676%             | 0                | 0                         |                                                                                                              |
+| Intermediary Space       |                      |                     | 0.5              | 0.001                     | At 50th epoch, train_acc=80.910%, val_acc=66.586%                                                            |
+| Early Intermediary Space | 26                   | 66.223%             | 0                | 0                         |                                                                                                              |
+| Early Intermediary Space |                      |                     | 0.5              | 0.001                     | At 50th epoch, train_acc=78.401%, 90% reached at 80th epoch, at 100th, validation accuracy was still 66.344% |
 
 #### Configuration
 
@@ -330,7 +330,7 @@ Also, keeping dropout=0.5 may not be the best idea for such model
 
 #### "Joined Classes"
 
-We join classes at the end with single perceptron
+I join classes at the end with single perceptron
 
 Model has 486491 parameters
 
@@ -410,7 +410,7 @@ class CustomModel(nn.Module):
 
 #### "Intermediary Space"
 
-We join flattened outcomes of each CNN and then pass them through longer Linear Neural Network
+I join flattened outcomes of each CNN and after one Linear Layer, I pass them through longer Linear Neural Network
 
 Model has 499683 parameters
 
@@ -469,6 +469,86 @@ class IntermediarySpaceModel(nn.Module):
             nn.Linear(S*3, S),
             nn.Dropout(p=dropout),
             nn.ReLU(inplace=True),
+            nn.Linear(S, num_classes),
+        )
+
+    def forward(self, images: torch.Tensor, edges: torch.Tensor) -> torch.Tensor:
+        
+        # Images
+        images = self.imagesClassifier(images)
+        
+        # Edges
+        edges = self.edgesClassifier(edges)
+        
+        # Combining outputs
+        concated = torch.cat((images, edges), 1)
+        res = self.outputCombiner(concated)
+        
+        return res
+```
+
+#### "Early Intermediary Space"
+
+I join flattened outcomes of each CNN and immediatelly pass them through longer Linear Neural Network
+
+Model has 499683 parameters
+
+```py
+class EarlyIntermediarySpaceModel(nn.Module):
+    def __init__(self, num_classes: int = 5, dropout: float = 0.5) -> None:
+        super().__init__()
+        
+        # Size of layer block
+        S = 32
+        
+        # Images
+        self.imagesClassifier = nn.Sequential(
+            nn.Conv2d(3, S*2, kernel_size=11, stride=4, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(S*2, S*2, kernel_size=5, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(S*2, S*2, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(S*2, S, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            
+            nn.Flatten(),
+        )
+
+        self.edgesClassifier = nn.Sequential(
+            nn.Conv2d(1, S*2, kernel_size=11, stride=4, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(S*2, S*2, kernel_size=5, padding=2),
+            nn.Dropout(p=dropout*0.4),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Dropout(p=dropout*0.6),
+            nn.Conv2d(S*2, S, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout*0.8),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            
+            nn.Flatten(),
+        )
+        
+        IMAGES_OUTPUT_LEN = S * 7 * 7
+        EDGES_OUTPUT_LEN = S * 6 * 6
+        
+        CNNs_OUTPUT_SIZE = IMAGES_OUTPUT_LEN + EDGES_OUTPUT_LEN
+        
+        self.outputCombiner = nn.Sequential(
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout),
+            nn.Linear(CNNs_OUTPUT_SIZE, S*3),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout),
+            nn.Linear(S*3, S),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout),
             nn.Linear(S, num_classes),
         )
 
