@@ -306,11 +306,183 @@ I will look at this in the next experiment
 
 Also, keeping dropout=0.5 may not be the best idea for such model
 
-## Testing Double Input Architecture of the Model 
+## 4.0 Testing Double Input Architecture of the Model
 
-<!-- | Method     | Learning epoch | dropout variable | regularization param (L2) |
-| ---------- | -------------- | ---------------- | ------------------------- |
-| No weights | 4              | 0                | 0                         |
-| Weights    | 4              | 0                | 0                         |
-| No weights | 20             | 0.5              | 0                         |
-| Weights    | 18             | 0.5              | 0                         | -->
+- "Reached 90% Training" - Epoch number (counting from 1) at which model reached or exceeded 90% of training accuracy
+- Validation Accuracy at the epoch from "Reached 90% Training" column
+- Models were tested up to 50th epoch
+
+| Method             | Reached 90% Training | Validation Accuracy | dropout variable | regularization param (L2) | Comments                                          |
+| ------------------ | -------------------- | ------------------- | ---------------- | ------------------------- | ------------------------------------------------- |
+| Joined Classes     | 19                   | 68.644%             | 0                | 0                         |                                                   |
+| Joined Classes     |                      |                     | 0.5              | 0.001                     | At 50th epoch, train_acc=82.226%, val_acc=61.501% |
+| Intermediary Space | 26                   | 67.676%             | 0                | 0                         |                                                   |
+| Intermediary Space |                      |                     | 0.5              | 0.001                     | At 50th epoch, train_acc=80.910%, val_acc=66.586% |
+
+
+
+#### Configuration
+
+- batch size = 128
+- learning rate = 0.001
+
+### Used Models
+
+#### "Joined Classes"
+
+We join classes at the end with single perceptron
+
+Model has 486491 parameters
+
+```py
+class CustomModel(nn.Module):
+    def __init__(self, num_classes: int = 5, dropout: float = 0.5) -> None:
+        super().__init__()
+        
+        # Size of layer block
+        S = 32
+        
+        # Images
+        self.imagesClassifier = nn.Sequential(
+            nn.Conv2d(3, S*2, kernel_size=11, stride=4, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(S*2, S*2, kernel_size=5, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(S*2, S*2, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(S*2, S, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            
+            nn.Flatten(),
+            nn.Dropout(p=dropout),
+            nn.Linear(S * 7 * 7, S*2),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout),
+            nn.Linear(S*2, S),
+            nn.ReLU(inplace=True),
+            nn.Linear(S, num_classes),
+        )
+
+        self.edgesClassifier = nn.Sequential(
+            nn.Conv2d(1, S*2, kernel_size=11, stride=4, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(S*2, S*2, kernel_size=5, padding=2),
+            nn.Dropout(p=dropout*0.4),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Dropout(p=dropout*0.6),
+            nn.Conv2d(S*2, S, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout*0.8),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            
+            nn.Flatten(),
+            nn.Dropout(p=dropout),
+            nn.Linear(S * 6 * 6, S*2),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout),
+            nn.Linear(S*2, num_classes),
+        )
+        
+        self.outputCombiner = nn.Sequential(
+            nn.Linear(2 * num_classes, num_classes),
+        )
+
+    def forward(self, images: torch.Tensor, edges: torch.Tensor) -> torch.Tensor:
+        
+        # Images
+        images = self.imagesClassifier(images)
+        
+        # Edges
+        edges = self.edgesClassifier(edges)
+        
+        
+        # Combining outputs
+        concated = torch.cat((images, edges), 1)
+        res = self.outputCombiner(concated)
+        
+        return res
+```
+
+#### "Intermediary Space"
+
+We join flattened outcomes of each CNN and then pass them through longer Linear Neural Network
+
+Model has 499683 parameters
+
+```py
+class IntermediarySpaceModel(nn.Module):
+    def __init__(self, num_classes: int = 5, dropout: float = 0.5) -> None:
+        super().__init__()
+        
+        # Size of layer block
+        S = 32
+        
+        # Images
+        self.imagesClassifier = nn.Sequential(
+            nn.Conv2d(3, S*2, kernel_size=11, stride=4, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(S*2, S*2, kernel_size=5, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(S*2, S*2, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(S*2, S, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            
+            nn.Flatten(),
+            nn.Dropout(p=dropout),
+            nn.Linear(S * 7 * 7, S*2),
+        )
+
+        self.edgesClassifier = nn.Sequential(
+            nn.Conv2d(1, S*2, kernel_size=11, stride=4, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(S*2, S*2, kernel_size=5, padding=2),
+            nn.Dropout(p=dropout*0.4),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Dropout(p=dropout*0.6),
+            nn.Conv2d(S*2, S, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout*0.8),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            
+            nn.Flatten(),
+            nn.Dropout(p=dropout),
+            nn.Linear(S * 6 * 6, S*2),
+        )
+        
+        self.outputCombiner = nn.Sequential(
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout),
+            nn.Linear(S*4, S*3),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout),
+            nn.Linear(S*3, S),
+            nn.Dropout(p=dropout),
+            nn.ReLU(inplace=True),
+            nn.Linear(S, num_classes),
+        )
+
+    def forward(self, images: torch.Tensor, edges: torch.Tensor) -> torch.Tensor:
+        
+        # Images
+        images = self.imagesClassifier(images)
+        
+        # Edges
+        edges = self.edgesClassifier(edges)
+        
+        # Combining outputs
+        concated = torch.cat((images, edges), 1)
+        res = self.outputCombiner(concated)
+        
+        return res
+```

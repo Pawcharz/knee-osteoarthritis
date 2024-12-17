@@ -1,106 +1,143 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-class CustomModel(nn.Module):
+class JointClassesOutputsModel(nn.Module):
     def __init__(self, num_classes: int = 5, dropout: float = 0.5) -> None:
         super().__init__()
         
-        BASE_SIZE = 16
+        # Size of layer block
+        S = 32
         
         # Images
-        self.images_features = nn.Sequential(
-            nn.Conv2d(3, BASE_SIZE, kernel_size=11, stride=4, padding=2),
+        self.imagesClassifier = nn.Sequential(
+            nn.Conv2d(3, S*2, kernel_size=11, stride=4, padding=2),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2),
-            nn.Conv2d(BASE_SIZE, BASE_SIZE*3, kernel_size=5, padding=2),
+            nn.Conv2d(S*2, S*2, kernel_size=5, padding=2),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2),
-            nn.Conv2d(BASE_SIZE*3, BASE_SIZE*6, kernel_size=3, padding=1),
+            nn.Conv2d(S*2, S*2, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
-            nn.Conv2d(BASE_SIZE*6, BASE_SIZE*4, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(BASE_SIZE*4, BASE_SIZE*4, kernel_size=3, padding=1),
+            nn.Conv2d(S*2, S, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2),
-        )
-        self.images_avgpool = nn.Sequential(
-          nn.AdaptiveAvgPool2d((6, 6)),
-          nn.Flatten()
-        )
-        self.images_classifier = nn.Sequential(
-            # nn.Dropout(p=dropout),
-            nn.Linear(BASE_SIZE*4 * 6 * 6, BASE_SIZE*8),
+            
+            nn.Flatten(),
+            nn.Dropout(p=dropout),
+            nn.Linear(S * 7 * 7, S*2),
             nn.ReLU(inplace=True),
             nn.Dropout(p=dropout),
-            nn.Linear(BASE_SIZE*8, BASE_SIZE*4),
+            nn.Linear(S*2, S),
             nn.ReLU(inplace=True),
-            nn.Linear(BASE_SIZE*4, num_classes),
+            nn.Linear(S, num_classes),
+        )
+
+        self.edgesClassifier = nn.Sequential(
+            nn.Conv2d(1, S*2, kernel_size=11, stride=4, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(S*2, S*2, kernel_size=5, padding=2),
+            nn.Dropout(p=dropout*0.4),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Dropout(p=dropout*0.6),
+            nn.Conv2d(S*2, S, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout*0.8),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            
+            nn.Flatten(),
+            nn.Dropout(p=dropout),
+            nn.Linear(S * 6 * 6, S*2),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout),
+            nn.Linear(S*2, num_classes),
         )
         
-        # Edges
-        # self.edges_features = nn.Sequential(
-        #     nn.Conv2d(3, 64, kernel_size=11, stride=4, padding=2),
-        #     nn.ReLU(inplace=True),
-        #     nn.MaxPool2d(kernel_size=3, stride=2),
-        #     nn.Conv2d(64, 192, kernel_size=5, padding=2),
-        #     nn.ReLU(inplace=True),
-        #     nn.MaxPool2d(kernel_size=3, stride=2),
-        #     nn.Conv2d(192, 384, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Conv2d(384, 256, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.Conv2d(256, 256, kernel_size=3, padding=1),
-        #     nn.ReLU(inplace=True),
-        #     nn.MaxPool2d(kernel_size=3, stride=2),
-        # )
-        # self.edges_avgpool = nn.AdaptiveAvgPool2d((6, 6))
-        # self.edges_classifier = nn.Sequential(
-        #     nn.Dropout(p=dropout),
-        #     nn.Linear(256 * 6 * 6, 4096),
-        #     nn.ReLU(inplace=True),
-        #     nn.Dropout(p=dropout),
-        #     nn.Linear(4096, 4096),
-        #     nn.ReLU(inplace=True),
-        #     nn.Linear(4096, num_classes),
-        # )
+        self.outputCombiner = nn.Sequential(
+            nn.Linear(2 * num_classes, num_classes),
+        )
 
-    def forward(self, image: torch.Tensor, edges: torch.Tensor) -> torch.Tensor:
+    def forward(self, images: torch.Tensor, edges: torch.Tensor) -> torch.Tensor:
         
-        images = self.images_features(image)
-        print(images.shape)
-        images = self.images_avgpool(images)
-        print(images.shape)
-        images = self.images_classifier(images)
+        # Images
+        images = self.imagesClassifier(images)
         
-        return images
+        # Edges
+        edges = self.edgesClassifier(edges)
+        
+        
+        # Combining outputs
+        concated = torch.cat((images, edges), 1)
+        res = self.outputCombiner(concated)
+        
+        return res
       
       
-class CustomModel_Old(nn.Module):
+class IntermediarySpaceModel(nn.Module):
     def __init__(self, num_classes: int = 5, dropout: float = 0.5) -> None:
         super().__init__()
         
-        weights = ResNet18_Weights.DEFAULT
-        self.resnet18 = resnet18(weights=weights, progress=False)
+        # Size of layer block
+        S = 32
         
-        self.baseClassifier = nn.Sequential(
-            nn.Linear(1000, 512),
+        # Images
+        self.imagesClassifier = nn.Sequential(
+            nn.Conv2d(3, S*2, kernel_size=11, stride=4, padding=2),
             nn.ReLU(inplace=True),
-            nn.Dropout(p=dropout * 0.5),
-            nn.Linear(512, 256),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(S*2, S*2, kernel_size=5, padding=2),
             nn.ReLU(inplace=True),
-            nn.Dropout(p=dropout* 0.7),
-            nn.Linear(256, 128),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(S*2, S*2, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
+            nn.Conv2d(S*2, S, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            
+            nn.Flatten(),
             nn.Dropout(p=dropout),
-            nn.Linear(128, 64),
-            nn.ReLU(inplace=True),
-            nn.Dropout(p=dropout),
-            nn.Linear(64, num_classes),
+            nn.Linear(S * 7 * 7, S*2),
         )
 
-    def forward(self, image: torch.Tensor, edges: torch.Tensor) -> torch.Tensor:
+        self.edgesClassifier = nn.Sequential(
+            nn.Conv2d(1, S*2, kernel_size=11, stride=4, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(S*2, S*2, kernel_size=5, padding=2),
+            nn.Dropout(p=dropout*0.4),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Dropout(p=dropout*0.6),
+            nn.Conv2d(S*2, S, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout*0.8),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            
+            nn.Flatten(),
+            nn.Dropout(p=dropout),
+            nn.Linear(S * 6 * 6, S*2),
+        )
         
-        images = self.resnet18(image)
-        images = self.baseClassifier(images)
-        return images
+        self.outputCombiner = nn.Sequential(
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout),
+            nn.Linear(S*4, S*3),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout),
+            nn.Linear(S*3, S),
+            nn.Dropout(p=dropout),
+            nn.ReLU(inplace=True),
+            nn.Linear(S, num_classes),
+        )
+
+    def forward(self, images: torch.Tensor, edges: torch.Tensor) -> torch.Tensor:
+        
+        # Images
+        images = self.imagesClassifier(images)
+        
+        # Edges
+        edges = self.edgesClassifier(edges)
+        
+        # Combining outputs
+        concated = torch.cat((images, edges), 1)
+        res = self.outputCombiner(concated)
+        
+        return res
