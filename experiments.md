@@ -142,16 +142,6 @@ for param in net.resnet18.parameters():
 | Training Loss       | 10.319  |
 | Validation Loss     | 0.629   |
 
-### Observations:
-
-- Overfitting observed at 15 epoch. Early stopping was applied.
-- Lower validation accuracy compared to training accuracy; potential model generalization issues. (Makes sense as ResNet18 was trained on CIFAR-1000)
-
-### Visualizations:
-
-- [Confusion Matrix](path/to/image)
-- [Learning Curves](path/to/image)
-
 ## 2.0 Only DownScaled AlexNet
 
 ### Setup:
