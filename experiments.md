@@ -300,11 +300,11 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 Seems like the existence of weights in criterion was not at fault.
 
-**I assume that previous architecture from point 2.0 was problematic** as we I was joining 2 models with separate layer after concating tensors.
+<!-- **I assume that previous architecture from point 2.0 was problematic** as we I was joining 2 models with separate layer after concating tensors.
 
 I will look at this in the next experiment
 
-Also, keeping dropout=0.5 may not be the best idea for such model
+Also, keeping dropout=0.5 may not be the best idea for such model -->
 
 ## 4.0 Testing Double Input Architecture of the Model
 
@@ -573,4 +573,113 @@ I assume, the reason may be the inequality of data between validation and traini
 
 Turns out the data was dividen in not so wise way.
 
-I will try to redo these experiments using better data division
+## Attempts to solve problems
+- I organized dataset in what I believe is a better way - I left all the classes except for 2nd (doubtful), instead of merging some of them into one.
+
+- I tried to reshuffle the whole dataset (assuming unequal representation of features) joining all 3 datasets and then splitting them again in random order. This didn't visibly solve the problem and even if, by no more than 2-3 perc. points of validation accuracy.
+
+- For better interpretability, I added confusion matrix and classification report table from sklearn (precision, recall, f1-score)
+
+- I got back to the previously used `IntermediarySpaceModel` which I will further adjust performing hyperparameter tuning with the use of optuna framework
+
+- I started using decaying learning rate
+
+### Experiment 5.0
+
+I ran model for 210 epochs to see how the classification matrices would look like
+
+Parameters:
+- initial lr = 0.001
+- lr decay -> 0.6 each 100 epochs
+- regularization -> "L2", lambda=0.003
+- dropout param -> 0.5
+
+model architecture:
+
+```py
+class IntermediarySpaceModel(nn.Module):
+    def __init__(self, num_classes: int = 5, dropout: float = 0.5) -> None:
+        super().__init__()
+        
+        # Size of layer block
+        S = 24
+        
+        # Images
+        self.imagesClassifier = nn.Sequential(
+            nn.Conv2d(3, S*2, kernel_size=11, stride=4, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Dropout(p=dropout*0.2),
+            nn.Conv2d(S*2, S*2, kernel_size=5, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Dropout(p=dropout*0.4),
+            nn.Conv2d(S*2, S*2, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout*0.6),
+            nn.Conv2d(S*2, S, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            
+            nn.Flatten(),
+            nn.Dropout(p=dropout*0.8),
+            nn.Linear(S * 7 * 7, S*2),
+        )
+
+        self.edgesClassifier = nn.Sequential(
+            nn.Conv2d(1, S*2, kernel_size=11, stride=4, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Dropout(p=dropout*0.4),
+            nn.Conv2d(S*2, S*2, kernel_size=5, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Dropout(p=dropout*0.6),
+            nn.Conv2d(S*2, S, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            
+            nn.Flatten(),
+            nn.Dropout(p=dropout*0.8),
+            nn.Linear(S * 6 * 6, S*2),
+        )
+        
+        self.outputCombiner = nn.Sequential(
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout),
+            nn.Linear(S*4, S*3),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout),
+            nn.Linear(S*3, S),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout),
+            nn.Linear(S, num_classes),
+        )
+
+    def forward(self, images: torch.Tensor, edges: torch.Tensor) -> torch.Tensor:
+        
+        # Images
+        images = self.imagesClassifier(images)
+        
+        # Edges
+        edges = self.edgesClassifier(edges)
+        
+        # Combining outputs
+        concated = torch.cat((images, edges), 1)
+        res = self.outputCombiner(concated)
+        
+        return res
+```
+
+Output at 210 epoch:
+> Epoch 209: Training: accuracy: 99.873%, loss: 0.069; Validation: accuracy: 70.710%, loss: 1.563
+
+
+**Training confusion matrix:**
+![train_cm](images/ex_5.0/train_cm.png)
+
+**Test confusion matrix:**
+![test_cm](images/ex_5.0/test_cm.png)
+
+**Validation confusion matrix:**
+![val_cm](images/ex_5.0/val_cm.png)
