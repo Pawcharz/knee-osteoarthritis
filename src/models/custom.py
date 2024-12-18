@@ -148,18 +148,21 @@ class EarlyIntermediarySpaceModel(nn.Module):
         super().__init__()
         
         # Size of layer block
-        S = 32
+        S = 16
         
         # Images
         self.imagesClassifier = nn.Sequential(
-            nn.Conv2d(3, S*2, kernel_size=11, stride=4, padding=2),
+            nn.Conv2d(3, S*3, kernel_size=11, stride=4, padding=2),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2),
-            nn.Conv2d(S*2, S*2, kernel_size=5, padding=2),
+            nn.Dropout(p=dropout*0.3),
+            nn.Conv2d(S*3, S*2, kernel_size=5, padding=2),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Dropout(p=dropout*0.5),
             nn.Conv2d(S*2, S*2, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout*0.8),
             nn.Conv2d(S*2, S, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2),
@@ -168,30 +171,32 @@ class EarlyIntermediarySpaceModel(nn.Module):
         )
 
         self.edgesClassifier = nn.Sequential(
-            nn.Conv2d(1, S*2, kernel_size=11, stride=4, padding=2),
+            nn.Conv2d(1, S*3, kernel_size=11, stride=4, padding=2),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2),
-            nn.Conv2d(S*2, S*2, kernel_size=5, padding=2),
-            nn.Dropout(p=dropout*0.4),
+            nn.Dropout(p=dropout*0.3),
+            nn.Conv2d(S*3, S*2, kernel_size=5, padding=2),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2),
             nn.Dropout(p=dropout*0.6),
             nn.Conv2d(S*2, S, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
-            nn.Dropout(p=dropout*0.8),
             nn.MaxPool2d(kernel_size=3, stride=2),
-            
-            nn.Flatten(),
+            nn.Dropout(p=dropout*0.8),
+            nn.Conv2d(S, S, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
         )
+        self.edgesFlatten = nn.Sequential(nn.Flatten())
         
         IMAGES_OUTPUT_LEN = S * 7 * 7
-        EDGES_OUTPUT_LEN = S * 6 * 6
+        EDGES_OUTPUT_LEN = S * 2 * 2
         
         CNNs_OUTPUT_SIZE = IMAGES_OUTPUT_LEN + EDGES_OUTPUT_LEN
         
         self.outputCombiner = nn.Sequential(
             nn.ReLU(inplace=True),
-            nn.Dropout(p=dropout),
+            nn.Dropout(p=dropout * 0.8),
             nn.Linear(CNNs_OUTPUT_SIZE, S*3),
             nn.ReLU(inplace=True),
             nn.Dropout(p=dropout),
@@ -208,6 +213,8 @@ class EarlyIntermediarySpaceModel(nn.Module):
         
         # Edges
         edges = self.edgesClassifier(edges)
+        # print(edges.shape)
+        edges = self.edgesFlatten(edges)
         
         # Combining outputs
         concated = torch.cat((images, edges), 1)
