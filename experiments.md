@@ -673,3 +673,10 @@ Output at 210 epoch:
 
 **Validation confusion matrix:**
 ![val_cm](images/ex_5.0/val_cm.png)
+
+
+### Test of the confusion matrix logging
+
+logs at [tensorboard_logs](logs/experiments/confusion_matrix_test)
+
+It seems that model first classifies all the examples to one class (typically 0 - healthy), and then as the training goes, adds another, more or less in order of their frequency of occurences in the dataset - Class 4 - severe is classified at the end as it is the rarer.
