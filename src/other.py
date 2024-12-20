@@ -3,6 +3,11 @@ from torch.utils.data import DataLoader
 import numpy as np
 import torch
 
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+
 def getClassesFrequency(dataset):
   freq_table = dict(Counter(dataset.labels))
   return freq_table
@@ -35,3 +40,9 @@ def getWeightedDataLoader(dataset, batch_size):
   dataloader = DataLoader(dataset, batch_size=batch_size, sampler=sampler)
   
   return dataloader
+
+def getConfusionMatrixDisplay(cm, classes):
+    # Build confusion matrix
+    df_cm = pd.DataFrame(cm / np.sum(cm, axis=1)[:, None], index=[i for i in classes], columns=[i for i in classes])
+    plt.figure(figsize=(4, 3))    
+    return sns.heatmap(df_cm, cmap='crest', annot=True).get_figure()
