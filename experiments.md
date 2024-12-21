@@ -279,7 +279,7 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 #### Weights
 
 ```py
-class_weights = getClassesFrequency(train_dataset)
+class_weights = get_classes_frequencies(train_dataset)
 weights_tensor = torch.Tensor(list(class_weights.values())).to(device)
 
 criterion = nn.CrossEntropyLoss(weights_tensor)
