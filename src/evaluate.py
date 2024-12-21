@@ -1,7 +1,6 @@
 import torch
 import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
-from src.other import getConfusionMatrixDisplay
     
 def evaluate_augmented_model(model, criterion, loader, device):
   correct = 0

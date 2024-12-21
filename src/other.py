@@ -41,8 +41,16 @@ def getWeightedDataLoader(dataset, batch_size):
   
   return dataloader
 
-def getConfusionMatrixDisplay(cm, classes):
-    # Build confusion matrix
-    df_cm = pd.DataFrame(cm / np.sum(cm, axis=1)[:, None], index=[i for i in classes], columns=[i for i in classes])
-    plt.figure(figsize=(4, 3))    
-    return sns.heatmap(df_cm, cmap='crest', annot=True).get_figure()
+def get_confusion_matrix_display(cm, classes, evType, epoch=None):
+  # Build confusion matrix
+  df_cm = pd.DataFrame(cm / np.sum(cm, axis=1)[:, None], index=[i for i in classes], columns=[i for i in classes])
+  plt.figure(figsize=(4, 3))    
+  heatmap = sns.heatmap(df_cm, cmap='crest', annot=True)
+  
+  title = evType
+    
+  if epoch != None:
+    title += f", epoch: {epoch}"
+      
+  heatmap.set(xlabel='true label', ylabel='predicted label', title=title)
+  return heatmap.get_figure()
