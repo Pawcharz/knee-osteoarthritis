@@ -137,8 +137,14 @@ class Trainer:
     return tAccuracy, tLoss, vAccuracy, vLoss, learning_rate
   
   def train_many(self, epochs_nr, log=True):
+    tAccuracy, tLoss, vAccuracy, vLoss = 0, 0, 0, 0
     for epoch in range(0, epochs_nr):
-      tAccuracy, tLoss, vAccuracy, vLoss, learning_rate = self.train_single()
-      print(f'Epoch {self.epochCounter}: Training: accuracy: {tAccuracy:.3f}%, loss: {tLoss:.3f}; Validation: accuracy: {vAccuracy:.3f}%, loss: {vLoss:.3f}, lr: {learning_rate:.5f}')
-      
-    print('Finished Training')
+      tAccuracy, tLoss, vAccuracy, vLoss, learning_rate = self.train_single()\
+        
+      if log:
+        print(f'Epoch {self.epochCounter}: Training: accuracy: {tAccuracy:.3f}%, loss: {tLoss:.3f}; Validation: accuracy: {vAccuracy:.3f}%, loss: {vLoss:.3f}, lr: {learning_rate:.5f}')
+    
+    if log:
+      print('Finished Training')
+    
+    return tAccuracy, tLoss, vAccuracy, vLoss
