@@ -680,3 +680,12 @@ Output at 210 epoch:
 logs at [tensorboard_logs](logs/experiments/confusion_matrix_test)
 
 It seems that model first classifies all the examples to one class (typically 0 - healthy), and then as the training goes, adds another, more or less in order of their frequency of occurences in the dataset - Class 4 - severe is classified at the end as it is the rarer.
+
+
+## Conclusion and Next Steps
+
+All the models achieve validation accuracy of aproximately 70% while the models are capable of reching training accuracy of 98-100%.
+
+It is difficult to choose one model as they all perform similarly and the performance on validation set and efficiency of training is highly dependant on the hyperparameters used (ex. dropout, regularization, etc.).
+
+Because of that I chose to proceed with `IntermediarySpaceModel` which I will try to further improve using automated hyperparameter tunning using `Optuna` frameworks.
