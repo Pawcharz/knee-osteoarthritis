@@ -78,8 +78,8 @@ class KneeOsteoarthritis_Edges(Dataset):
         image = self.images[idx]
         edges_image = self.edges_images[idx]
         label = self.labels[idx]
-        
-        return image, edges_image, label
+         
+        return (image, edges_image), label
 
 def get_KneeOsteoarthritis_Edges(path) -> KneeOsteoarthritis_Edges:
   
