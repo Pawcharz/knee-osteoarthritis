@@ -153,3 +153,7 @@ I picked hyperparameters based on 2 top trials which will be further used to tra
 - regularization lambda - 0.025823 or 0.029792 -> 0.027
 
 ## Training model with picked hyperparameters
+
+Model was trained for 500 epochs with initial **learning rate of 0.0001** and **batch size of 512**.
+
+The training logs are available in `logs/hyperparameters_tunned/2` directory.
