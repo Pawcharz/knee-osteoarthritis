@@ -150,6 +150,6 @@ I picked hyperparameters based on 2 top trials which will be further used to tra
 - layer size - 27 or 28 -> 28
 - main dropout - 0.62445 or 0.38567 -> 0.5
 - learning rate decay per 100 epochs - 0.53909 or 0.67510 -> 0.6
-- regularization lambda - 0.025823 or 0.029792 -> 0.27
+- regularization lambda - 0.025823 or 0.029792 -> 0.027
 
 ## Training model with picked hyperparameters
