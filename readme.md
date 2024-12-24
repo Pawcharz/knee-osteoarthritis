@@ -8,15 +8,14 @@ This project focuses on classifying knee osteoarthritis severity using deep lear
 - [Dataset](#dataset)
   - [Data Reorganization](#data-reorganization)
   - [Data Augmentation](#data-augmentation)
-- [Techniques Used](#techniques-used)
+- [Techniques Used](#techniques-used-during-training)
   - [Weighted Loss](#weighted-loss)
   - [Decaying Learning Rate](#decaying-learning-rate)
   - [Trainer Class](#trainer-class)
-  - [TensorBoard Logging](#tensorboard-logging)
+  - [TensorBoard](#tensorboard)
 - [Experiments](#experiments)
 - [Hyperparameter Tuning](#hyperparameter-tuning)
 - [Results](#results)
-- [Conclusion](#conclusion)
 - [References](#references)
 
 ## Project Overview
