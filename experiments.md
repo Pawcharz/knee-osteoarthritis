@@ -685,12 +685,15 @@ Output at 210 epoch:
 
 
 **Training confusion matrix:**
+
 ![train_cm](images/ex_5.0/train_cm.png)
 
 **Validation confusion matrix:**
+
 ![val_cm](images/ex_5.0/val_cm.png)
 
 **Test confusion matrix:**
+
 ![test_cm](images/ex_5.0/test_cm.png)
 
 ### Test of the confusion matrix logging
