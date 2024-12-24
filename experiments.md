@@ -1,10 +1,14 @@
-# Experiments
+# Experiments - choice of different models
 
 ## Whole resnet18 backbone
 
-### 1.0 ResSet18 + edges processed by separate group of layers:
+### 1.0 ResSet18 Backbone
 
-Configuration:
+ResSet18 used for normal images + edges (augmented images) processed by separate CNN, outputs of each block are joined by single feed forward layer:
+
+Logs available at `logs/1/resnet18-backbone`
+
+Training configuration:
 
 - 400 epochs
 - L2 regularisation with lambda=0.005
@@ -78,14 +82,18 @@ Configuration:
   param.requires_grad = False
   ```
 
-Results
+Results:
 
 - Overfitting
 - Training Accuracy reached 80% while validation got stuct around 63% at 40th epoch
   ![validation loss graph](images/resnet18-backbone/1/val_loss.png)
   ![training loss graph](images/resnet18-backbone/1/train_loss.png)
 
-## 1.1 Only ResNet-18 with frozen weights + FFN
+## 1.1 Only ResNet-18 for original images with frozen weights + FFN
+
+Logs available at `logs/1/only-resnet18`
+
+Here the augmented images are not used at all
 
 ### Setup:
 
@@ -142,7 +150,13 @@ for param in net.resnet18.parameters():
 | Training Loss       | 10.319  |
 | Validation Loss     | 0.629   |
 
+Model starts overfitting early, for this reason, the experiment was stopped
+
 ## 2.0 Only DownScaled AlexNet
+
+Downscaled AlexNet for original images, augmented images are not included
+
+Logs available at `logs/2/images_downscaled_alexnet`
 
 ### Setup:
 
@@ -206,7 +220,7 @@ net = net.to(device)
 
 Model does not learn at all - accuracy stays at 57.442% for the whole 20 epochs which is equal to frequency of the most frequent class in the dataset
 
-I will proceed to find the solution to this problem
+I will proceed to find the solution to this problem in the next step (3.0)
 
 ## 3.0 Overcomming excessive representation of classes in dataset
 
@@ -214,7 +228,7 @@ Here, I use weighted optimizer in different settings which I compare below
 
 "Learning epoch" means number (starting from 0) of epoch at which accuracy got higher than 57.442% by at least 5% (> 62.442%)
 
-I will be testing each method (training model) for no more than 50 epochs
+Each method (training model) was tested for no more than 50 epochs
 
 | Method     | Learning epoch | dropout variable | regularization param (L2) |
 | ---------- | -------------- | ---------------- | ------------------------- |
@@ -222,6 +236,8 @@ I will be testing each method (training model) for no more than 50 epochs
 | Weights    | 4              | 0                | 0                         |
 | No weights | 20             | 0.5              | 0                         |
 | Weights    | 18             | 0.5              | 0                         |
+
+For this experiment, nothing was logged
 
 #### Configuration
 
@@ -267,7 +283,7 @@ class CustomModel(nn.Module):
         return edges
 ```
 
-### Methods used
+### Optimizer configurations used
 
 #### No weights
 
@@ -290,13 +306,12 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 Seems like the existence of weights in criterion was not at fault.
 
-<!-- **I assume that previous architecture from point 2.0 was problematic** as we I was joining 2 models with separate layer after concating tensors.
+I assume the issue with the initial model was solved by training solely on augmented images, instead of original ones.
 
-I will look at this in the next experiment
-
-Also, keeping dropout=0.5 may not be the best idea for such model -->
 
 ## 4.0 Testing Double Input Architecture of the Model
+
+In this experiment I process both inputs separately and then connect them via FFN
 
 - "Reached 90% Training" - Epoch number (counting from 1) at which model reached or exceeded 90% of training accuracy
 - Validation Accuracy at the epoch from "Reached 90% Training" column
@@ -310,6 +325,8 @@ Also, keeping dropout=0.5 may not be the best idea for such model -->
 | Intermediary Space       |                      |                     | 0.5              | 0.001                     | At 50th epoch, train_acc=80.910%, val_acc=66.586%                                                            |
 | Early Intermediary Space | 26                   | 66.223%             | 0                | 0                         |                                                                                                              |
 | Early Intermediary Space |                      |                     | 0.5              | 0.001                     | At 50th epoch, train_acc=78.401%, 90% reached at 80th epoch, at 100th, validation accuracy was still 66.344% |
+
+Logs are available at `logs/experiments/4/<row_nr>` - each row in the table above has its own subfolder
 
 #### Configuration
 
@@ -576,6 +593,8 @@ Turns out the data was dividen in not so wise way.
 
 ### Experiment 5.0
 
+Logs available at `logs/5/0`
+
 I ran model for 210 epochs to see how the classification matrices would look like
 
 Parameters:
@@ -666,26 +685,31 @@ Output at 210 epoch:
 
 
 **Training confusion matrix:**
+
 ![train_cm](images/ex_5.0/train_cm.png)
 
-**Test confusion matrix:**
-![test_cm](images/ex_5.0/test_cm.png)
-
 **Validation confusion matrix:**
+
 ![val_cm](images/ex_5.0/val_cm.png)
 
+**Test confusion matrix:**
+
+![test_cm](images/ex_5.0/test_cm.png)
 
 ### Test of the confusion matrix logging
 
-logs at [tensorboard_logs](logs/experiments/confusion_matrix_test)
+logs at [tensorboard_logs](logs/experiments/5/confusion_matrix_test)
 
 It seems that model first classifies all the examples to one class (typically 0 - healthy), and then as the training goes, adds another, more or less in order of their frequency of occurences in the dataset - Class 4 - severe is classified at the end as it is the rarer.
-
 
 ## Conclusion and Next Steps
 
 All the models achieve validation accuracy of aproximately 70% while the models are capable of reching training accuracy of 98-100%.
 
-It is difficult to choose one model as they all perform similarly and the performance on validation set and efficiency of training is highly dependant on the hyperparameters used (ex. dropout, regularization, etc.).
+It is difficult to choose one model as they all perform similarly and the performance on validation set and efficiency of training can be expected to be highly dependant on the hyperparameters used (ex. dropout, regularization, etc.).
 
 Because of that I chose to proceed with `IntermediarySpaceModel` which I will try to further improve using automated hyperparameter tunning using `Optuna` frameworks.
+
+The hyperparameters tunning:
+- [hyperparam_tunning.ipynb](hyperparam_tunning.ipynb)
+- [hyperparameters_results.md](hyperparameters_results.md)
