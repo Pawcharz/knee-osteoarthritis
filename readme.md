@@ -87,7 +87,9 @@ The results of the hyperparameter tuning experiments, including the optimal hype
 
 ## Results
 
-The combination of data augmentation, weighted loss, decaying learning rate, and hyperparameter tuning led to slightly improved classification accuracy on test set. 
+The combination of data augmentation, weighted loss, decaying learning rate, and hyperparameter tuning led to slightly improved classification accuracy on test set.
+
+On test set, the model reaches accuracy of 70.214% and 93.476% on the training dataset.
 
 Specific performance metrics and comparisons are detailed in the [hyperparameters_results.md](hyperparameters_results.md).
 Final model can be found at [saved_models/model_saved.pt](saved_models/model_saved.pt)

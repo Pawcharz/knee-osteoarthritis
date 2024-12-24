@@ -156,6 +156,10 @@ I picked hyperparameters based on 2 top trials which will be further used to tra
 
 Model was trained for 500 epochs with initial **learning rate of 0.0001** and **batch size of 512** and learning rate decay of 0.5 per 100 epochs.
 
+## Results
+
+On test set, the model reaches accuracy of 70.214% and 93.476% on the training dataset.
+
 The training logs are available in `logs/hyperparameters_tunned/final` directory.
 
 Result model is located at `saved_models/model_saved.pt`.
