@@ -2,9 +2,11 @@
 
 ## Whole resnet18 backbone
 
-### 1.0 ResSet18 used for normal images + edges (augmented images) processed by separate CNN, outputs joined by single feed forward layer:
+### 1.0 ResSet18 Backbone
 
-Logs available at `logs/resnet18-backbone`
+ResSet18 used for normal images + edges (augmented images) processed by separate CNN, outputs of each block are joined by single feed forward layer:
+
+Logs available at `logs/1/resnet18-backbone`
 
 Training configuration:
 
@@ -89,7 +91,9 @@ Results:
 
 ## 1.1 Only ResNet-18 for original images with frozen weights + FFN
 
-HEre the augmented images are not used at all
+Logs available at `logs/1/only-resnet18`
+
+Here the augmented images are not used at all
 
 ### Setup:
 
@@ -151,6 +155,8 @@ Model starts overfitting early, for this reason, the experiment was stopped
 ## 2.0 Only DownScaled AlexNet
 
 Downscaled AlexNet for original images, augmented images are not included
+
+Logs available at `logs/2/images_downscaled_alexnet`
 
 ### Setup:
 
@@ -230,6 +236,8 @@ Each method (training model) was tested for no more than 50 epochs
 | Weights    | 4              | 0                | 0                         |
 | No weights | 20             | 0.5              | 0                         |
 | Weights    | 18             | 0.5              | 0                         |
+
+For this experiment, nothing was logged
 
 #### Configuration
 
@@ -317,6 +325,8 @@ In this experiment I process both inputs separately and then connect them via FF
 | Intermediary Space       |                      |                     | 0.5              | 0.001                     | At 50th epoch, train_acc=80.910%, val_acc=66.586%                                                            |
 | Early Intermediary Space | 26                   | 66.223%             | 0                | 0                         |                                                                                                              |
 | Early Intermediary Space |                      |                     | 0.5              | 0.001                     | At 50th epoch, train_acc=78.401%, 90% reached at 80th epoch, at 100th, validation accuracy was still 66.344% |
+
+Logs are available at `logs/experiments/4/<row_nr>` - each row in the table above has its own subfolder
 
 #### Configuration
 
@@ -583,6 +593,8 @@ Turns out the data was dividen in not so wise way.
 
 ### Experiment 5.0
 
+Logs available at `logs/5/0`
+
 I ran model for 210 epochs to see how the classification matrices would look like
 
 Parameters:
@@ -675,24 +687,26 @@ Output at 210 epoch:
 **Training confusion matrix:**
 ![train_cm](images/ex_5.0/train_cm.png)
 
-**Test confusion matrix:**
-![test_cm](images/ex_5.0/test_cm.png)
-
 **Validation confusion matrix:**
 ![val_cm](images/ex_5.0/val_cm.png)
 
+**Test confusion matrix:**
+![test_cm](images/ex_5.0/test_cm.png)
 
 ### Test of the confusion matrix logging
 
-logs at [tensorboard_logs](logs/experiments/confusion_matrix_test)
+logs at [tensorboard_logs](logs/experiments/5/confusion_matrix_test)
 
 It seems that model first classifies all the examples to one class (typically 0 - healthy), and then as the training goes, adds another, more or less in order of their frequency of occurences in the dataset - Class 4 - severe is classified at the end as it is the rarer.
-
 
 ## Conclusion and Next Steps
 
 All the models achieve validation accuracy of aproximately 70% while the models are capable of reching training accuracy of 98-100%.
 
-It is difficult to choose one model as they all perform similarly and the performance on validation set and efficiency of training is highly dependant on the hyperparameters used (ex. dropout, regularization, etc.).
+It is difficult to choose one model as they all perform similarly and the performance on validation set and efficiency of training can be expected to be highly dependant on the hyperparameters used (ex. dropout, regularization, etc.).
 
 Because of that I chose to proceed with `IntermediarySpaceModel` which I will try to further improve using automated hyperparameter tunning using `Optuna` frameworks.
+
+The hyperparameters tunning:
+- [hyperparam_tunning.ipynb](hyperparam_tunning.ipynb)
+- [hyperparameters_results.md](hyperparameters_results.md)
