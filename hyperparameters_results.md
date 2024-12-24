@@ -126,7 +126,7 @@ To run tenosrboard the following command has to be executed: `tensorboard --logd
 
 ## Conclusions
 
-![hparams_all.png](attachment:hparams_all.png)
+![hparams_all.png](images/hyperparameter_tunning_ratio_abs/hparams_all.png)
 
 (This is a plot of 25 (half) of the traials with highest score)
 
@@ -134,7 +134,7 @@ As we can see, the top scores align with the trials that acquired highest valida
 
 ### Scatterplot
 
-![hparams_scatter.png](attachment:hparams_scatter.png)
+![hparams_scatter.png](images/hyperparameter_tunning_ratio_abs/hparams_scatter.png)
 
 (all trials)
 
