@@ -59,12 +59,10 @@ class KneeOsteoarthritis_Edges(Dataset):
             image_agmentation = image.numpy()*255
             image_agmentation = np.moveaxis(image_agmentation, 0, -1)
             edges_image = getAugmentationEdges(image_agmentation)
-            # print(image.shape, image_agmentation.shape, edges_image.shape)
             edges_image = torch.tensor(edges_image)
             label = data[1]
             
             image = transform_baseImage(image)
-            # print(image.shape, edges_image.shape)
             edges_image = transform_edgesImage(edges_image.unsqueeze(0))
             
             self.images.append(image)
