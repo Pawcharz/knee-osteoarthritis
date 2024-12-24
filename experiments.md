@@ -1,10 +1,12 @@
-# Experiments
+# Experiments - choice of different models
 
 ## Whole resnet18 backbone
 
-### 1.0 ResSet18 + edges processed by separate group of layers:
+### 1.0 ResSet18 used for normal images + edges (augmented images) processed by separate CNN, outputs joined by single feed forward layer:
 
-Configuration:
+Logs available at `logs/resnet18-backbone`
+
+Training configuration:
 
 - 400 epochs
 - L2 regularisation with lambda=0.005
@@ -78,14 +80,16 @@ Configuration:
   param.requires_grad = False
   ```
 
-Results
+Results:
 
 - Overfitting
 - Training Accuracy reached 80% while validation got stuct around 63% at 40th epoch
   ![validation loss graph](images/resnet18-backbone/1/val_loss.png)
   ![training loss graph](images/resnet18-backbone/1/train_loss.png)
 
-## 1.1 Only ResNet-18 with frozen weights + FFN
+## 1.1 Only ResNet-18 for original images with frozen weights + FFN
+
+HEre the augmented images are not used at all
 
 ### Setup:
 
@@ -142,7 +146,11 @@ for param in net.resnet18.parameters():
 | Training Loss       | 10.319  |
 | Validation Loss     | 0.629   |
 
+Model starts overfitting early, for this reason, the experiment was stopped
+
 ## 2.0 Only DownScaled AlexNet
+
+Downscaled AlexNet for original images, augmented images are not included
 
 ### Setup:
 
@@ -206,7 +214,7 @@ net = net.to(device)
 
 Model does not learn at all - accuracy stays at 57.442% for the whole 20 epochs which is equal to frequency of the most frequent class in the dataset
 
-I will proceed to find the solution to this problem
+I will proceed to find the solution to this problem in the next step (3.0)
 
 ## 3.0 Overcomming excessive representation of classes in dataset
 
@@ -214,7 +222,7 @@ Here, I use weighted optimizer in different settings which I compare below
 
 "Learning epoch" means number (starting from 0) of epoch at which accuracy got higher than 57.442% by at least 5% (> 62.442%)
 
-I will be testing each method (training model) for no more than 50 epochs
+Each method (training model) was tested for no more than 50 epochs
 
 | Method     | Learning epoch | dropout variable | regularization param (L2) |
 | ---------- | -------------- | ---------------- | ------------------------- |
@@ -267,7 +275,7 @@ class CustomModel(nn.Module):
         return edges
 ```
 
-### Methods used
+### Optimizer configurations used
 
 #### No weights
 
@@ -290,13 +298,12 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 Seems like the existence of weights in criterion was not at fault.
 
-<!-- **I assume that previous architecture from point 2.0 was problematic** as we I was joining 2 models with separate layer after concating tensors.
+I assume the issue with the initial model was solved by training solely on augmented images, instead of original ones.
 
-I will look at this in the next experiment
-
-Also, keeping dropout=0.5 may not be the best idea for such model -->
 
 ## 4.0 Testing Double Input Architecture of the Model
+
+In this experiment I process both inputs separately and then connect them via FFN
 
 - "Reached 90% Training" - Epoch number (counting from 1) at which model reached or exceeded 90% of training accuracy
 - Validation Accuracy at the epoch from "Reached 90% Training" column

@@ -122,7 +122,7 @@ where:
 ## Results
 The results are saved as tensorboard logs in "logs/hyperparameter_tunning_ratio_abs" directory
 
-To run tenosrboard the following command has to be executed: `tensorboard --logdir logs/hyperparameter_tunning`
+To run tenosrboard the following command has to be executed: `tensorboard --logdir logs/hyperparameter_tunning_ratio_abs`
 
 ## Conclusions
 
@@ -147,13 +147,16 @@ From the scatterplot, it can be seen, that best scores correspond with:
 ## Further training
 
 I picked hyperparameters based on 2 top trials which will be further used to train model for more epochs:
-- layer size - 27 or 28 -> 28
-- main dropout - 0.62445 or 0.38567 -> 0.5
-- learning rate decay per 100 epochs - 0.53909 or 0.67510 -> 0.6
-- regularization lambda - 0.025823 or 0.029792 -> 0.027
+- layer size - 27 and 28 -> 28
+- main dropout - 0.62445 and 0.38567 -> 0.5
+- learning rate decay per 100 epochs - 0.53909 and 0.67510 -> 0.5 (because training will take longer than during experiments)
+- regularization lambda - 0.025823 and 0.029792 -> 0.027
 
 ## Training model with picked hyperparameters
 
-Model was trained for 500 epochs with initial **learning rate of 0.0001** and **batch size of 512**.
+Model was trained for 500 epochs with initial **learning rate of 0.0001** and **batch size of 512** and learning rate decay of 0.5 per 100 epochs.
 
-The training logs are available in `logs/hyperparameters_tunned/2` directory.
+The training logs are available in `logs/hyperparameters_tunned/final` directory.
+
+Result model is located at `saved_models/model_saved.pt`.
+
